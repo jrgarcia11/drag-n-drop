@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<database>
+    <element label="skill" max_length="40" name="x_170003_skillshar_skill" type="collection">
+        <element label="description" max_length="120" name="description" type="string"/>
+        <element label="Skill Name" max_length="40" name="skill_name" type="string"/>
+    </element>
+</database>

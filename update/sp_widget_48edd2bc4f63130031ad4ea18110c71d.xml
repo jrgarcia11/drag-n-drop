@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<record_update table="sp_widget">
+    <sp_widget action="INSERT_OR_UPDATE">
+        <category>custom</category>
+        <client_script><![CDATA[function ($scope) {
+  /* widget controller */
+  var c = this;
+
+  c.dragStart = function (event) {
+    //change target appearance so we can see we have grabbed it
+    event.target.style.opacity = '0.7';
+    //change cursor
+    event.target.style.cursor = 'grabbing';
+    //prep for move
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/html', event.target.innerHTML);
+    c.draggedNode = event.target.id;
+    //ignore all other tasks until we are done
+    document.querySelectorAll('.task').forEach(function (cur) {
+      if (cur.id !== event.target.id) {
+        cur.classList.add('disabled');
+      }
+    })
+  };
+
+  c.dragEnd = function (event) {
+    event.target.style.opacity = '1';
+    event.target.style.cursor = 'grab';
+    var cols = document.querySelectorAll('.task-col-content');
+    cols.forEach(function (cur) {
+      cur.classList.remove('over')
+    });
+    document.querySelectorAll('.task').forEach(function (cur) {
+      cur.classList.remove('disabled');
+    })
+  };
+
+  c.dragEnter = function (event) {
+    //set class for things being dragged over
+    if (event.target && event.target.classList) {
+      event.target.classList.add('over');
+    }
+  };
+
+  c.dragLeave = function (event) {
+    //remove class for things being dragged over
+    if (event.target && event.target.classList) {
+      event.target.classList.remove('over');
+    }
+  };
+
+  c.dragOver = function (event) {
+    if (event.preventDefault) {
+      event.preventDefault(); // Necessary. Allows us to drop.
+    }
+    event.dataTransfer.dropEffect = 'move';
+    return false;
+  };
+
+  //recursive function to determine where we drop
+  function findColType(element) {
+    var maxLevels = 4;
+    return checkElement(element, 1);
+
+    function checkElement(element, level) {
+      if (!element) {
+        return null;
+      }
+      if (level >= maxLevels) {
+        return null;
+      }
+      if (element.classList && element.classList.contains('task-col')) {
+        return element.id;
+      }
+      return checkElement(element.parentElement, level++);
+    }
+  }
+  c.drop = function (event) {
+    if (event.stopPropagation) {
+      event.stopPropagation(); // stops the browser from redirecting.
+    }
+    var colType = findColType(event.target);
+    c.data.tasks[parseInt(c.draggedNode)].state = colType;
+    //apply changes to angular if necessary
+    $scope.$apply();
+  };
+}]]></client_script>
+        <controller_as>c</controller_as>
+        <css>[draggable] {
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+  /* Required to make elements draggable in old WebKit */
+  -khtml-user-drag: element;
+  -webkit-user-drag: element;
+}
+
+div{
+    --col-header-color: rgb(242, 242, 242);
+    --taskboard-border-color: rgb(210, 214, 215); 
+    --col-highlight-color: rgb(255, 255, 210);
+}
+
+#drag-n-drop{
+    background-color:white;
+    border-radius: 6px;
+    padding: 6px;
+}
+
+#taskboard-container {
+    display:grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 85px auto;
+    border: 1px solid var(--taskboard-border-color);
+    height: 600px;
+}
+
+.taskboard-header {
+    grid-column: 1/5;
+    font-weight: bold;
+    border-bottom: 1px solid var(--taskboard-border-color);
+}
+
+.taskboard-header&gt;h1 {
+    text-align:center;
+}
+
+.task-col {
+    overflow-y: auto;
+    display:flex;
+    flex-direction: column;
+}
+
+.task-col-content{
+  	width:auto;
+    //padding: 6px;
+    height: 100%;
+}
+
+.task-col-content.over {
+    background-color: var(--col-highlight-color);
+}
+
+.task-col-header {
+    background-color: var(--col-header-color);
+    text-align: center;
+    font-weight: bold;
+}
+
+.task-col.right-border {
+    border-right: 1px solid var(--taskboard-border-color);
+}
+
+.task {
+    margin: 6px;
+    box-shadow: 2px 2px 2px 1px rgba(0,0,0,0.37);
+    border-radius: 3px;
+    padding: 3px;
+    cursor: grab;
+    pointer-events: all;
+}
+
+.task.disabled {
+    pointer-events:none;
+}
+
+.task-header {
+    font-weight: bold;
+}</css>
+        <data_table>sp_instance</data_table>
+        <demo_data/>
+        <description/>
+        <docs/>
+        <field_list/>
+        <has_preview>false</has_preview>
+        <id>skill_comparison</id>
+        <internal>false</internal>
+        <link/>
+        <name>skill comparison</name>
+        <option_schema/>
+        <public>true</public>
+        <roles/>
+        <script><![CDATA[(function() {
+  /* populate the 'data' object */
+  /* e.g., data.table = $sp.getValue('table'); */
+  var tasks = [
+    {"id":0, "title":"JavaScript", "description":"Makes web stuff work","state":"todo","color":randomColor()},
+    {"id":1, "title":"Appian", "description":"Fast, low-code development","state":"todo","color":randomColor()},
+    {"id":2, "title":"ServiceNow", "description":"Not just a ticketing system","state":"todo","color":randomColor()},
+		{"id":3, "title":"ITOPS", "description":"Infrastructure support","state":"in-progress","color":randomColor()},
+		{"id":4, "title":"HR", "description":"I love working with humans","state":"in-progress","color":randomColor()},
+		{"id":5, "title":"HTML", "description":"Boxes are my passion","state":"in-progress","color":randomColor()},
+		{"id":6, "title":"CSS", "description":"Colors are my passion","state":"in-progress","color":randomColor()},
+		{"id":7, "title":"Sales", "description":"Exploiting disruptive market opportunities","state":"done","color":randomColor()},
+		{"id":8, "title":"Selenium", "description":"Automated bug catching","state":"done","color":randomColor()},
+		{"id":9, "title":"Mulesoft", "description":"Integrating integrations","state":"done","color":randomColor()}
+  ];
+	function randomColor(){
+		var colors = [
+			'#ccccff','#b7b7ff','#9999ff',//blue
+			'#ffaabb','#ff5577','#ff0033','#aa0022',//red
+			'#78b2ab','#509c87','#47836c','#2d7452',//green
+			'#d0a3ff','#a360fb','#7100d2','#3e0074',//purple
+			'#f9de8a','#ffc367','#ffa242','#ff7400',//orange
+			'#ffe8a0','#ffda8a'//yellow
+		];
+		return colors[Math.floor(Math.random() * colors.length)];
+	}
+  data.tasks = tasks;
+})();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2018-07-24 17:29:58</sys_created_on>
+        <sys_id>48edd2bc4f63130031ad4ea18110c71d</sys_id>
+        <sys_mod_count>7</sys_mod_count>
+        <sys_name>skill comparison</sys_name>
+        <sys_package display_value="skillshare" source="x_170003_skillshar">ec447d704f23130031ad4ea18110c780</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="skillshare">ec447d704f23130031ad4ea18110c780</sys_scope>
+        <sys_update_name>sp_widget_48edd2bc4f63130031ad4ea18110c71d</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2018-07-24 18:49:24</sys_updated_on>
+        <template><![CDATA[<div id="drag-n-drop">
+  <!-- script for accessing angular from outside -->
+  <script>
+    //gets the angular scope from outside because 
+    //we don't have access to it for drag events
+    function getScope() {
+      return angular.element('#drag-n-drop').scope().c;
+    }
+  </script>
+  <!-- container for drag n drop task board -->
+  <div id="taskboard-container">
+
+
+    <div class="taskboard-header">
+      <h1>Share Your Skills</h1>
+    </div>
+
+    <div class="task-col right-border" id="todo">
+      <div class="task-col-header">
+        My Skills
+      </div>
+      <div class="task-col-content" ondragenter="getScope().dragEnter(event)" 
+           ondragleave="getScope().dragLeave(event)" 
+           ondragover="getScope().dragOver(event)" 
+           ondrop="getScope().drop(event)">
+        <div class="task" ng-repeat="task in c.data.tasks" ng-if="task.state=='todo'" id="{{task.id}}"
+             draggable="true" ondragstart="getScope().dragStart(event)" ondragend="getScope().dragEnd(event)">
+          <div class="task-header">
+            {{task.title}}
+          </div>
+          <div class="task-description">
+            {{task.description}}
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="task-col right-border" id="in-progress">
+      <div class="task-col-header">
+        Our Skills
+      </div>
+      <div class="task-col-content" ondragenter="getScope().dragEnter(event)" 
+           ondragleave="getScope().dragLeave(event)" 
+           ondragover="getScope().dragOver(event)" 
+           ondrop="getScope().drop(event)">
+        <div class="task" style="background-color:{{task.color}};color:white;" ng-repeat="task in c.data.tasks" ng-if="task.state=='in-progress'" id="{{task.id}}"
+             draggable="true" ondragstart="getScope().dragStart(event)" ondragend="getScope().dragEnd(event)">
+          <div class="task-header">
+            {{task.title}}
+          </div>
+          <div class="task-description">
+            {{task.description}}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="task-col right-border" id="done">
+      <div class="task-col-header">
+        Mentor Skills
+      </div>
+      <div class="task-col-content" ondragenter="getScope().dragEnter(event)" 
+           ondragleave="getScope().dragLeave(event)" 
+           ondragover="getScope().dragOver(event)" 
+           ondrop="getScope().drop(event)">
+        <div class="task" ng-repeat="task in c.data.tasks" ng-if="task.state=='done'" id="{{task.id}}"
+             draggable="true" ondragstart="getScope().dragStart(event)" ondragend="getScope().dragEnd(event)">
+          <div class="task-header">
+            {{task.title}}
+          </div>
+          <div class="task-description">
+            {{task.description}}
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+</div>]]></template>
+    </sp_widget>
+</record_update>
